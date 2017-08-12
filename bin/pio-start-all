@@ -73,6 +73,21 @@ if [ `echo $SOURCE_TYPE | grep -i hbase | wc -l` != 0 ] ; then
   fi
 fi
 
+# Cassandra
+#if [ `echo $SOURCE_TYPE | grep -i cassandra | wc -l` != 0 ] ; then
+#  echo "Starting Cassandra..."
+#  if [ -n "$PIO_STORAGE_SOURCES_CASSANDRA_HOME" ]; then
+#    $PIO_STORAGE_SOURCES_CASSANDRA_HOME/bin/start-cassandra.sh TODO: Fix this to use cassandra start
+#  else
+#    echo -e "\033[0;31mPlease set PIO_STORAGE_SOURCES_CASSANDRA_HOME in conf/pio-env.sh, or in your environment.\033[0m"
+#    # Kill everything for cleanliness
+#    echo -e "\033[0;31mCannot start Cassandra. Aborting...\033[0m"
+#    sleep 3
+#    ${PIO_HOME}/bin/pio-stop-all
+#    exit 1
+#  fi
+#fi
+
 #PGSQL
 if [ `echo $SOURCE_TYPE | grep -i pgsql | wc -l` != 0 ] ; then
   pgsqlStatus="$(ps auxwww | grep postgres | wc -l)"

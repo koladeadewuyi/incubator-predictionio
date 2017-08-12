@@ -45,6 +45,14 @@ if [ `echo $SOURCE_TYPE | grep -i hbase | wc -l` != 0 ] ; then
   fi
 fi
 
+# Cassandra
+#if [ `echo $SOURCE_TYPE | grep -i cassandra | wc -l` != 0 ] ; then
+#  echo "Stopping Cassandra..."
+#  if [ -n "$PIO_STORAGE_SOURCES_CASSANDRA_HOME" ]; then
+#    $PIO_STORAGE_SOURCES_CASSANDRA_HOME/bin/stop-cassandra.sh TODO: Fix this to use cassandra stop
+#  fi
+#fi
+
 # Elasticsearch
 if [ `echo $SOURCE_TYPE | grep -i elasticsearch | wc -l` != 0 ] ; then
   echo "Stopping Elasticsearch..."
