@@ -34,9 +34,11 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
   override
   def init(appId: Int, channelId: Option[Int] = None): Boolean = {
 
+    logger.info("CS init")
+
     val tableName = getTableName(keySpace, appId, channelId)
     info(s"Auto-creating table $tableName if it doesn't already exist")
-    val query =
+    val batchTableCreation =
       s"""
       |create table if not exists $tableName(
       | eventId text,
@@ -51,15 +53,29 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
       | eventTimeZone text,
       | creationTime timestamp,
       | creationTimeZone text,
-      | primary key (entityId, event, eventId, eventTime, entityType)
+      | primary key (entityId, event, eventTime, entityType, eventId)
       |)
+      |with clustering order by (event desc, eventTime desc, entityType desc);
       """.stripMargin
-    client.execute(query)
+    val speedTableName = tableName + "_recent"
+    val speedTableCreation =
+    s"""
+       |create table if not exists $tableName(
+       |eventId text,
+       |entityId text,
+       |eventTime timestamp,
+       |primary key (entityId)
+       |)
+       |with clustering order by (eventTime desc)
+     """.stripMargin
+    client.execute(batchTableCreation)
     true
   }
 
   override
   def remove(appId: Int, channelId: Option[Int] = None): Boolean = {
+
+    logger.info("CS remove")
     try {
       val tableName = getTableName(keySpace, appId, channelId)
       info(s"Removing table $tableName if it exists")
@@ -85,23 +101,23 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
     Future[String] = {
 
     val keyedEvent = eventToPut(event, appId)
-    val rowKeyString = keyedEvent.eventId
+    val rowKeyString = keyedEvent.eventid
     val preparedStmt = getInsertStatement(client, keySpace, appId, channelId, keyedEvent).get
 
     Future {
       val stmt = preparedStmt.bind()
-      stmt.setString("eventId", keyedEvent.eventId)
+      stmt.setString("eventId", keyedEvent.eventid)
       stmt.setString("event", keyedEvent.event)
-      stmt.setString("entityType", keyedEvent.entityType)
-      stmt.setString("entityId", keyedEvent.entityId)
+      stmt.setString("entityType", keyedEvent.entitytype)
+      stmt.setString("entityId", keyedEvent.entityid)
       stmt.setString("properties", keyedEvent.properties)
-      keyedEvent.prId.map { x => stmt.setString("prId", x) }
-      stmt.setTimestamp("eventTime", keyedEvent.eventTime.toDate)
-      stmt.setString("eventTimeZone", keyedEvent.eventTimeZone)
-      stmt.setTimestamp("creationTime", keyedEvent.creationTime.toDate)
-      stmt.setString("creationTimeZone", keyedEvent.creationTimeZone)
-      keyedEvent.targetEntityType.map { x => stmt.setString("targetEntityType", x) }
-      keyedEvent.targetEntityId.map { x => stmt.setString("targetEntityId", x) }
+      keyedEvent.prid.map { x => stmt.setString("prId", x) }
+      stmt.setTimestamp("eventTime", keyedEvent.eventtime.toDate)
+      stmt.setString("eventTimeZone", keyedEvent.eventtimezone)
+      stmt.setTimestamp("creationTime", keyedEvent.creationtime.toDate)
+      stmt.setString("creationTimeZone", keyedEvent.creationtimezone)
+      keyedEvent.targetentitytype.map { x => stmt.setString("targetEntityType", x) }
+      keyedEvent.targetentityid.map { x => stmt.setString("targetEntityId", x) }
 
       client.execute(stmt)
       rowKeyString
@@ -112,9 +128,10 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
   def futureGet(
     eventId: String, appId: Int, channelId: Option[Int])(implicit ec: ExecutionContext):
     Future[Option[Event]] = {
-      Future {
+    Future {
         val tableName = getTableName(keySpace, appId, channelId)
         val query = s"select * from $tableName where eventId = ? limit 1"
+//        logger.info(s"$query")
         Option(client.execute(client.prepare(query).bind(tableName, eventId)).one).map {
           rs => resultToEvent(rs, appId)
         }
@@ -154,22 +171,24 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
         "the parameter reversed can only be used with both entityType and entityId specified.")
 
       val tableName = getTableName(keySpace, appId, channelId)
-      val startTimeClause = if (startTime.isDefined) s"eventTime >= ${startTime.map(_.getMillis).getOrElse(0)}" else ""
-      val untilTimeClause = if (untilTime.isDefined) s"eventTime <= ${untilTime.map(_.getMillis).getOrElse(Long.MaxValue)}" else ""
-      val entityTypeClause = if (entityType.isDefined && entityType.get.nonEmpty) s"entityType = '${entityType.get}'" else ""
+//      val startTimeClause = if (startTime.isDefined) s"eventTime >= ${startTime.getOrElse(new DateTime(0)).toDate}" else ""
+//      val untilTimeClause = if (untilTime.isDefined) s"eventTime <= ${untilTime.getOrElse(new DateTime()).toDate}" else ""
+//      val entityTypeClause = if (entityType.isDefined && entityType.get.nonEmpty) s"entityType = '${entityType.get}'" else ""
+      val entityTypeClause = ""
       val entityIdClause = if (entityId.isDefined && entityId.get.nonEmpty) s"entityId = '${entityId.get}'" else ""
-      val eventNamesClause = if (eventNames.getOrElse(List.empty).nonEmpty) s"eventNames in ('${eventNames.getOrElse(List.empty).mkString("','")}')" else ""
+//      val eventNamesClause = if (eventNames.getOrElse(List.empty).nonEmpty) s"event in ('${eventNames.getOrElse(List.empty).mkString("','")}')" else ""
       val targetEntityTypeClause = if (targetEntityType.isDefined && targetEntityType.get.exists(_.nonEmpty)) s"targetEntityType = '${targetEntityType.flatten.get}'" else ""
       val targetEntityIdClause = if (targetEntityId.isDefined && targetEntityId.get.exists(_.nonEmpty)) s"targetEntityId = '${targetEntityId.flatten.get}'" else ""
-      val ordering = if (reversed == Some(true)) s"order by eventTime desc" else ""
+//      val ordering = if (reversed == Some(true)) s"order by eventTime desc" else "" // Already ordered by eventTime in desc order
+      val ordering = ""
       val limitClause = if (limit.isDefined) s"limit ${limit.get}" else ""
 
       val clauses = List(
-        startTimeClause,
-        untilTimeClause,
+//        startTimeClause,
+//        untilTimeClause,
         entityTypeClause,
         entityIdClause,
-        eventNamesClause,
+//        eventNamesClause,
         targetEntityTypeClause,
         targetEntityIdClause
       ).filterNot(clause => clause.isEmpty)
@@ -182,6 +201,8 @@ class CSLEvents(val client: Session, config: StorageClientConfig, val keySpace: 
             | $limitClause
             | ${if (clauses.isEmpty || entityId == None) "" else "allow filtering" }
            """.stripMargin
+//      logger.info(s"$query")
+
       val result = client.execute(query).all()
       val events = result.iterator().map { e =>
         resultToEvent(e, appId)

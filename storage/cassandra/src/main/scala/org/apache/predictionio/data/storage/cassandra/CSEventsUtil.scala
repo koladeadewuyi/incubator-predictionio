@@ -39,18 +39,18 @@ import com.datastax.driver.core._
 import java.util.UUID
 
 case class KeyedEvent(
-                       eventId: String,
+                       eventid: String,
                        event: String,
-                       entityType: String,
-                       entityId: String,
-                       targetEntityType: Option[String],
-                       targetEntityId: Option[String],
+                       entitytype: String,
+                       entityid: String,
+                       targetentitytype: Option[String],
+                       targetentityid: Option[String],
                        properties: String,
-                       prId: Option[String],
-                       eventTime: DateTime,
-                       eventTimeZone: String,
-                       creationTime: DateTime,
-                       creationTimeZone: String
+                       prid: Option[String],
+                       eventtime: DateTime,
+                       eventtimezone: String,
+                       creationtime: DateTime,
+                       creationtimezone: String
                        )
 
 /* common utility function for accessing EventsStore in Cassandra */
@@ -116,7 +116,7 @@ object CSEventsUtil {
 
   def getInsertStatement(client: Session, keySpace: String, appId: Int, channelId: Option[Int], keyedEvent: KeyedEvent): Option[PreparedStatement] = {
     val tableName = getTableName(keySpace, appId, channelId)
-    val key = s"${keyedEvent.prId.isDefined}_${keyedEvent.targetEntityType.isDefined}_${keyedEvent.targetEntityId.isDefined}"
+    val key = s"${keyedEvent.prid.isDefined}_${keyedEvent.targetentitytype.isDefined}_${keyedEvent.targetentityid.isDefined}"
     if (statements.isEmpty) {
       val biValue = List(true, false)
       statements = biValue.map { prId =>

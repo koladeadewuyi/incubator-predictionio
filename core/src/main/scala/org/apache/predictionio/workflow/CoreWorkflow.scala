@@ -88,6 +88,8 @@ object CoreWorkflow {
         ))
 
       logger.info("Training completed successfully.")
+      logger.debug("Stopping SparkContext")
+      sc.stop()
     } catch {
       case e @(
           _: StopAfterReadInterruption |

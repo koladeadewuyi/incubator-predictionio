@@ -57,6 +57,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
   }
 
   override def init(appId: Int, channelId: Option[Int] = None): Boolean = {
+    logger.info("ES init")
     val estype = getEsType(appId, channelId)
     val restClient = client.open()
     try {
@@ -85,6 +86,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
   }
 
   override def remove(appId: Int, channelId: Option[Int] = None): Boolean = {
+    logger.info("ES remove")
     val estype = getEsType(appId, channelId)
     val restClient = client.open()
     try {
@@ -119,6 +121,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
     event: Event,
     appId: Int,
     channelId: Option[Int])(implicit ec: ExecutionContext): Future[String] = {
+    logger.info("ES futureInsert")
     Future {
       val estype = getEsType(appId, channelId)
       val restClient = client.open()
@@ -192,6 +195,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
     eventId: String,
     appId: Int,
     channelId: Option[Int])(implicit ec: ExecutionContext): Future[Option[Event]] = {
+    logger.info("ES futureGet")
     Future {
       val estype = getEsType(appId, channelId)
       val restClient = client.open()
@@ -228,6 +232,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
     eventId: String,
     appId: Int,
     channelId: Option[Int])(implicit ec: ExecutionContext): Future[Boolean] = {
+    logger.info("ES futureDelete")
     Future {
       val estype = getEsType(appId, channelId)
       val restClient = client.open()
@@ -272,6 +277,7 @@ class ESLEvents(val client: ESClient, config: StorageClientConfig, val index: St
     limit: Option[Int] = None,
     reversed: Option[Boolean] = None)
     (implicit ec: ExecutionContext): Future[Iterator[Event]] = {
+    logger.info("ES futureFind")
     Future {
       val estype = getEsType(appId, channelId)
       val restClient = client.open()

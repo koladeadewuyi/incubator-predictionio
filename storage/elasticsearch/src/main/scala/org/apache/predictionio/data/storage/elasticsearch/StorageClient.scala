@@ -17,7 +17,8 @@
 
 package org.apache.predictionio.data.storage.elasticsearch
 
-import org.apache.http.HttpHost
+import org.apache.http.message.BasicHeader
+import org.apache.http.{Header, HttpHost}
 import org.apache.predictionio.data.storage.BaseStorageClient
 import org.apache.predictionio.data.storage.StorageClientConfig
 import org.apache.predictionio.data.storage.StorageClientException
@@ -27,8 +28,12 @@ import grizzled.slf4j.Logging
 
 case class ESClient(hosts: Seq[HttpHost]) {
   def open(): RestClient = {
+    val headers: Array[Header] = Array(
+      new BasicHeader("Content-Type", "application/json")
+    )
+
     try {
-      RestClient.builder(hosts: _*).build()
+      RestClient.builder(hosts: _*).setDefaultHeaders(headers).build()
     } catch {
       case e: Throwable =>
         throw new StorageClientException(e.getMessage, e)

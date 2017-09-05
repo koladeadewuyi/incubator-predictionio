@@ -44,7 +44,7 @@ case class CassandraConnectionUri(connectionString: String) {
 
 class StorageClient(val config: StorageClientConfig)
   extends BaseStorageClient with Logging {
-
+  // TODO: extract config params (i.e. hosts, port keySpace, replication_factor or use a cassandra config file)
   val hosts: Seq[String] = config.properties.getOrElse("HOSTS", "127.0.0.1").split(',').toSeq
   val keySpace = "pio_event"
 

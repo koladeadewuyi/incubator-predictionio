@@ -122,18 +122,18 @@ class CSPEvents(client: Session, config: StorageClientConfig, keySpace: String) 
     val keyedEvents: RDD[KeyedEvent] = events.map { event =>
       val keyedEvent = CSEventsUtil.eventToPut(event, appId)
       KeyedEvent(
-        keyedEvent.eventId,
+        keyedEvent.eventid,
         keyedEvent.event,
-        keyedEvent.entityType,
-        keyedEvent.entityId,
-        keyedEvent.targetEntityType,
-        keyedEvent.targetEntityId,
+        keyedEvent.entitytype,
+        keyedEvent.entityid,
+        keyedEvent.targetentitytype,
+        keyedEvent.targetentityid,
         keyedEvent.properties,
-        keyedEvent.prId,
-        keyedEvent.eventTime,
-        keyedEvent.eventTimeZone,
-        keyedEvent.creationTime,
-        keyedEvent.creationTimeZone
+        keyedEvent.prid,
+        keyedEvent.eventtime,
+        keyedEvent.eventtimezone,
+        keyedEvent.creationtime,
+        keyedEvent.creationtimezone
       )
     }
     keyedEvents.saveToCassandra(keySpace, tableName)
